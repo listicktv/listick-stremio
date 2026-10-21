@@ -1,0 +1,50 @@
+# Releases: on every push to main, release-please keeps a release pull request up to date (the next version from the
+# commit messages, feat: / fix:, and CHANGELOG.md). Merging it tags vX.Y.Z and publishes the GitHub release, and then the
+# image is built, each platform on its own native runner (amd64, arm64), and pushed to ghcr.io/listicktv/listick-stremio as
+# X.Y.Z, X.Y and latest. The image is built here rather than on the tag, since a tag pushed with GITHUB_TOKEN starts no
+# other workflow.
+name: Release
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - uses: googleapis/release-please-action@v5
+        id: release
+
+  image:
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    uses: docker/github-builder/.github/workflows/build.yml@v1
+    permissions:
+      contents: read
+      id-token: write   # signs the build's attestations
+      packages: write
+    with:
+      output: image
+      push: true
+      platforms: linux/amd64,linux/arm64
+      cache: true
+      meta-images: ghcr.io/listicktv/listick-stremio
+      meta-tags: |
+        type=semver,pattern={{version}},value=${{ needs.release-please.outputs.tag_name }}
+        type=semver,pattern={{major}}.{{minor}},value=${{ needs.release-please.outputs.tag_name }}
+        type=raw,value=latest
+      set-meta-labels: true
+    secrets:
+      registry-auths: |
+        - registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}

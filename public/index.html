@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catalogs</title>
+<link rel="icon" href="/logo.svg" type="image/svg+xml">
+<style>
+  @font-face { font-family: Manrope; src: url(/fonts/manrope.woff2) format("woff2"); font-weight: 200 800; font-display: swap; }
+  @font-face { font-family: "JetBrains Mono"; src: url(/fonts/jetbrains-mono.woff2) format("woff2"); font-weight: 100 800; font-display: swap; }
+  :root { --accent: #f5a524; --text: #f2f5fb; --text-2: rgba(242, 245, 251, 0.78); --muted: rgba(242, 245, 251, 0.6); --faint: rgba(242, 245, 251, 0.4);
+    --line: rgba(255, 255, 255, 0.08); --field: rgba(255, 255, 255, 0.05); --face: #121726; --ok: #34d399; --bad: #f87171;
+    --mono: 'JetBrains Mono', ui-monospace, monospace; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; min-height: 100vh; font-family: Manrope, system-ui, sans-serif; color: var(--text); background: #0b1020; }
+  .box { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 14px; background: rgba(18, 23, 38, 0.8); border: 1px solid var(--line); }
+  .box h2 { margin: 0; font-size: 11.5px; font-weight: 700; letter-spacing: 0.1em; color: var(--muted); }
+  label { display: flex; flex-direction: column; gap: 5px; font-size: 12px; font-weight: 600; color: var(--text-2); }
+  .in { height: 40px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.14); background: var(--field); color: var(--text); padding: 0 12px; font: 13.5px Manrope, sans-serif; }
+  .in:focus { outline: none; border-color: var(--accent); }
+  .in.mono { font: 12px var(--mono); }
+  .btn { height: 42px; border: 0; border-radius: 10px; background: rgba(255, 255, 255, 0.12); color: var(--text); font: 600 13px Manrope, sans-serif; cursor: pointer; padding: 0 14px; }
+  .btn.primary { background: var(--accent); color: #0b1020; font-weight: 700; height: 46px; font-size: 14px; }
+  .btn:disabled { opacity: 0.5; cursor: default; }
+  .line { display: flex; gap: 8px; } .line .in { flex: 1; min-width: 0; }
+  .msg { margin: 0; font-size: 12px; line-height: 1.45; color: var(--muted); }
+  .msg.ok { color: var(--ok); } .msg.bad { color: var(--bad); }
+  .msg:empty { display: none; }
+  details summary { cursor: pointer; font-size: 12.5px; font-weight: 600; color: var(--text-2); list-style: none; }
+  details summary::-webkit-details-marker { display: none; }
+  details[open] summary { margin-bottom: 10px; }
+  .seg { display: flex; padding: 3px; border-radius: 10px; background: var(--field); }
+  .seg button { flex: 1; height: 30px; border: 0; border-radius: 8px; background: none; color: var(--muted); font: 600 12px Manrope, sans-serif; cursor: pointer; }
+  .seg button.on { background: rgba(255, 255, 255, 0.14); color: var(--text); }
+  .login { height: 38px; padding: 0 14px 0 6px; display: flex; align-items: center; gap: 8px;
+    border: 1px solid var(--line); border-radius: 999px; background: rgba(18, 23, 38, 0.9); color: var(--text); font: 600 12.5px Manrope, sans-serif; cursor: pointer; }
+  .login .c { width: 28px; height: 28px; pointer-events: none; }
+  .login .c svg { width: 13px; height: 13px; }
+  .login:hover { border-color: var(--accent); }
+  .dlg { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 16px; background: rgba(4, 6, 12, 0.6); }
+  .dlg[hidden] { display: none !important; }
+  .dlg .box { width: min(380px, 100%); background: #121726; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55); }
+  .dlg .top { display: flex; align-items: center; justify-content: space-between; }
+  .dlg .x { width: 30px; height: 30px; border: 0; border-radius: 8px; background: rgba(255, 255, 255, 0.08); color: var(--text); cursor: pointer; font-size: 16px; }
+  .lh { display: flex; align-items: center; justify-content: space-between; padding: 8px 0 6px; }
+  .lh h3 { margin: 0; font-size: 11.5px; font-weight: 700; letter-spacing: 0.1em; color: var(--muted); }
+  .lh span { font-size: 10.5px; color: var(--faint); }
+  .mv { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+  .mv button { width: 22px; height: 15px; border: 0; padding: 0; border-radius: 4px; background: none; color: var(--faint); cursor: pointer; display: grid; place-items: center; }
+  .mv button:hover:not(:disabled) { color: var(--accent); }
+  .mv button:disabled { opacity: 0.25; cursor: default; }
+  .mv svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+
+  .grp { display: flex; flex-direction: column; margin-bottom: 22px; }
+  .gh { display: flex; align-items: center; justify-content: space-between; padding-bottom: 6px; }
+  .gh h3 { margin: 0; font-size: 11.5px; font-weight: 700; letter-spacing: 0.1em; color: var(--muted); }
+  .gh span { font-size: 10.5px; color: var(--faint); }
+  .row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); }
+  .row.off .nm, .row.off .pick { opacity: 0.45; }
+  .row { flex-wrap: wrap; }
+  .chips { flex: 0 0 100%; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; padding: 2px 0 2px; }
+  .c.gone { visibility: hidden; }
+  .c:disabled { cursor: default; }
+  .chip { height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.18); background: none; color: var(--text-2); font: 600 12px Manrope, sans-serif; cursor: pointer; }
+  .chip.on { border-color: var(--accent); color: var(--accent); background: rgba(245, 165, 36, 0.08); }
+  .row.drag { background: #121726; position: relative; z-index: 2; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); border-radius: 10px; }
+  body.dragging { user-select: none; cursor: grabbing; } body.dragging .grip { cursor: grabbing; }
+  .grip { width: 22px; height: 30px; flex-shrink: 0; border: 0; background: none; color: var(--faint); cursor: grab; touch-action: none; padding: 0; display: grid; place-items: center; }
+  .grip svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; }
+  .sw { position: relative; width: 38px; height: 22px; flex-shrink: 0; border: 0; border-radius: 999px; background: rgba(255, 255, 255, 0.18); cursor: pointer; padding: 0; }
+  .sw::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left 0.15s; }
+  .sw[aria-checked="true"] { background: var(--accent); }
+  .sw[aria-checked="true"]::after { left: 18px; }
+  .nmw { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .nm { min-width: 0; height: 28px; border: 0; border-bottom: 1px dashed rgba(255, 255, 255, 0.2); background: none; color: var(--text); font: 600 13px Manrope, sans-serif; padding: 0; }
+  .nm:focus { outline: none; border-bottom-color: var(--accent); }
+  .pick { display: flex; gap: 8px; }
+  .c { width: 32px; height: 32px; flex-shrink: 0; border: 0; padding: 0; border-radius: 50%; display: grid; place-items: center; color: var(--text); cursor: pointer;
+    background: radial-gradient(circle closest-side, var(--face) 0 calc(100% - 3.5px), rgba(255, 255, 255, 0.22) calc(100% - 3px)); }
+  .c.on { color: var(--accent); background: radial-gradient(circle closest-side, var(--face) 0 calc(100% - 3.5px), var(--accent) calc(100% - 3px)); }
+  .c svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .page { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; display: flex; flex-direction: column; gap: 16px; }
+  .bar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; min-height: 44px; }
+  .bar > :last-child { justify-self: end; align-self: start; }
+  .acct { position: relative; }
+  .acct[hidden] { display: none; }
+  .login { padding: 0 10px 0 6px; }
+  .login .chev { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 10; min-width: 210px; display: flex; flex-direction: column; padding: 4px; border-radius: 12px;
+    background: #121726; border: 1px solid var(--line); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5); }
+  .menu[hidden] { display: none; }
+  .menu button { height: 38px; padding: 0 12px; border: 0; border-radius: 8px; background: none; color: var(--text); font: 600 13px Manrope, sans-serif; text-align: left; cursor: pointer; }
+  .menu button:hover { background: rgba(255, 255, 255, 0.07); }
+  .menu .danger { color: var(--bad); }
+  .menu .danger.armed { background: rgba(248, 113, 113, 0.15); }
+  .brand { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 8px 0 4px; }
+  .brand .logos { display: flex; gap: 16px; }
+  .brand img { width: 84px; height: 84px; filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.45)); }
+  .brand b { font-size: 22px; font-weight: 800; }
+  .keygrid { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 16px; align-items: end; }
+  .keygrid .lbl { display: block; margin-bottom: 5px; font-size: 12px; font-weight: 600; color: var(--text-2); }
+  #main { padding: 6px 16px 8px; }
+  .finish { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: start; }
+  .finish > div { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  body.start .page { min-height: 100vh; justify-content: center; max-width: 440px; }
+  body.start #main, body.start #finish, body.start #keybox { display: none; }
+  body:not(.start) #start { display: none; }
+  #start form, #pwbox form, #pw-done { display: flex; flex-direction: column; gap: 10px; }
+  #start form[hidden], #pw-done[hidden], #pwbox form[hidden] { display: none; }
+  #start .seg { margin-bottom: 6px; }
+  #pwbox { display: none; }
+  body.pw #pwbox { display: flex; }
+  body.pw #keybox, body.pw #main, body.pw #finish { display: none; }
+  body.pw .page { min-height: 100vh; justify-content: center; max-width: 440px; }
+  #login[hidden] { display: none; }
+  .uid { height: 52px; font-size: 15px; text-align: center; color: var(--accent); }
+  .keygrid:has(#daysw[hidden]) { grid-template-columns: minmax(0, 1fr); }
+  @media (max-width: 800px) {
+    .keygrid, .finish { grid-template-columns: minmax(0, 1fr); }
+    .finish { gap: 20px; }
+    /* phones reorder with the arrows */
+    .grip { display: none; }
+    .row { gap: 8px; }
+    .pick { gap: 6px; }
+    .pick .c { width: 30px; height: 30px; }
+  }
+</style>
+</head>
+<body class="start">
+<div class="page">
+  <header class="bar"><span></span><div class="brand"><span class="logos"><img src="/logo.svg" alt=""><img src="/stremio.svg" alt="Stremio"></span><b>Catalogs</b></div>
+    <div class="acct" id="acct" hidden>
+      <button class="login" id="login" type="button" aria-haspopup="menu" aria-expanded="false"><span class="c"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8a4 4 0 1 0 0 8zM4.5 20c.9-3.5 3.9-5.5 7.5-5.5s6.6 2 7.5 5.5"></path></svg></span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+      <div class="menu" id="menu" role="menu" hidden>
+        <button type="button" role="menuitem" id="m-out">Log out</button>
+        <button type="button" role="menuitem" class="danger" id="m-reset">Reset to defaults</button>
+        <button type="button" role="menuitem" class="danger" id="m-del">Delete saved settings</button>
+      </div>
+    </div></header>
+  <section class="box" id="start">
+    <div class="seg" id="tabs"><button type="button" class="on" data-tab="new">API key</button><button type="button" data-tab="back">Sign in</button></div>
+    <form id="t-new">
+      <label>Listick API key<input class="in mono" id="key0" type="password" autocomplete="off" spellcheck="false"></label>
+      <button class="btn primary" type="submit">Continue</button>
+      <p class="msg" id="k0-msg"></p>
+    </form>
+    <form id="load" hidden>
+      <label>UUID<input class="in mono" id="l-uuid" autocomplete="username" spellcheck="false"></label>
+      <label>Password<input class="in" id="l-pass" type="password" autocomplete="current-password"></label>
+      <button class="btn primary" id="l-go" type="submit">Sign in</button>
+      <p class="msg" id="l-msg"></p>
+    </form>
+  </section>
+  <section class="box" id="pwbox">
+    <form id="pw-form">
+      <h2>CREATE A PASSWORD</h2>
+      <label>Password<input class="in" id="s-pass" type="password" autocomplete="new-password" placeholder="8 characters or more"></label>
+      <label>Password again<input class="in" id="s-again" type="password" autocomplete="new-password"></label>
+      <button class="btn primary" type="submit">Save</button>
+      <button class="btn" id="pw-back" type="button">Back</button>
+      <p class="msg" id="pw-msg"></p>
+    </form>
+    <div id="pw-done" hidden>
+      <h2>YOUR UUID</h2>
+      <input class="in mono uid" id="pw-uuid" readonly aria-label="UUID">
+      <p class="msg">Save it: you need it to sign in.</p>
+      <div class="line"><button class="btn" type="button" id="pw-copy" style="flex: 1">Copy</button><button class="btn" type="button" id="pw-dl" style="flex: 1">Download</button></div>
+      <button class="btn primary" id="pw-ok" type="button" disabled>Done</button>
+    </div>
+  </section>
+  <section class="box" id="keybox">
+    <div class="keygrid">
+      <label>Listick API key<input class="in mono" id="key" type="password" autocomplete="off" spellcheck="false"></label>
+      <div id="daysw" hidden><span class="lbl">Up next window</span><div class="seg" id="days"></div></div>
+    </div>
+    <p class="msg" id="k-msg"></p>
+  </section>
+  <section class="box" id="main"><div id="groups"></div></section>
+  <section class="box finish" id="finish" hidden>
+    <div id="savebox" hidden>
+      <h2>SAVE</h2>
+      <label id="s-uuid-row" hidden>UUID<div class="line"><input class="in mono" id="s-uuid" readonly><button class="btn" type="button" data-copy="s-uuid">Copy</button></div></label>
+      <button class="btn" id="s-go" type="button">Save</button>
+      <p class="msg" id="s-msg"></p>
+    </div>
+    <div id="installbox" hidden>
+      <h2>INSTALL</h2>
+      <a class="btn primary" id="install" href="#" style="display: grid; place-items: center; text-decoration: none">Install in Stremio</a>
+      <div class="line"><input class="in mono" id="link" readonly aria-label="Manifest link"><button class="btn" type="button" data-copy="link">Copy</button></div>
+      <p class="msg" id="i-msg"></p>
+    </div>
+  </section>
+</div>
+<script>
+const $ = (id) => document.getElementById(id);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const ICON = { filter: 'M4 5h16l-6 7.5V19l-4 1.5v-8z', home: 'M3 11l9-7 9 7M5 10v10h5v-6h4v6h5V10', disc: 'M12 3.5a8.5 8.5 0 1 0 0 17a8.5 8.5 0 1 0 0-17zM15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8z', grip: 'M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01' };
+const icon = (d, w = 2) => { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('aria-hidden', 'true');
+  const p = document.createElementNS('http://www.w3.org/2000/svg', 'path'); p.setAttribute('d', d); if (w !== 2) p.setAttribute('stroke-width', w); s.append(p); return s; };
+let src = [], picks = {}, order = [], days = 60, DAYS = [30, 60, 90], uuid = null, savedSig = null;
+
+// only what differs from the defaults goes into the link
+let chosen = {}, openSrc = null;
+const variantOf = (s, v) => s.variants.find((x) => x.v === v);
+function config() {
+  const lists = {}, v = {};
+  for (const s of src) {
+    if (JSON.stringify(chosen[s.key]) !== JSON.stringify(s.defaults)) v[s.key] = chosen[s.key];
+    for (const vr of s.variants) for (const pt of vr.parts) {
+      const p = picks[pt.key], d = {};
+      if (p.on !== s.on) d.on = p.on;
+      if (p.name.trim() && p.name.trim() !== pt.name) d.name = p.name.trim();
+      if (p.home !== vr.home) d.home = p.home;
+      if (Object.keys(d).length) lists[pt.key] = d;
+    }
+  }
+  return { k: $('key').value.trim(), v: Object.keys(v).length ? v : {}, lists, order, days };
+}
+function entries() {
+  const out = [];
+  for (const s of src) for (const vr of s.variants) if (chosen[s.key].includes(vr.v)) for (const pt of vr.parts) out.push({ key: pt.key, s, vr, pt });
+  return out;
+}
+// one variant always stays on; a new one's catalogs go next to the list's first
+function toggleVariant(s, v) {
+  const on = chosen[s.key].includes(v);
+  if (on && (chosen[s.key].length === 1 || v === 'none')) return;
+  const keys = variantOf(s, v).parts.map((pt) => pt.key);
+  if (on) { chosen[s.key] = chosen[s.key].filter((x) => x !== v); order = order.filter((k) => !keys.includes(k)); }
+  else {
+    chosen[s.key] = s.variants.map((x) => x.v).filter((x) => x === v || chosen[s.key].includes(x));
+    const mine = new Set(s.variants.flatMap((x) => x.parts.map((pt) => pt.key)));
+    const at = order.findIndex((k) => mine.has(k)) + 1 || order.length;
+    order.splice(at, 0, ...keys.filter((k) => !order.includes(k)));
+  }
+  openSrc = s.key; render(); refreshLink();
+}
+const b64 = (o) => btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+// a saved, unchanged config links by UUID, so the key isn't in the link
+function refreshLink() {
+  if (!src.length) return;
+  const sig = JSON.stringify(config()), seg = uuid && sig === savedSig ? uuid : b64(config());
+  const link = `${location.origin}/${seg}/manifest.json`;
+  $('link').value = link; $('install').href = link.replace(/^https?:/, 'stremio:');
+  $('i-msg').className = 'msg'; $('i-msg').textContent = uuid && sig !== savedSig ? 'Unsaved changes' : '';
+}
+
+function render() {
+  const box = $('groups'); box.replaceChildren();
+  const rank = new Map(order.map((k, i) => [k, i]));
+  const all = entries();
+  const list = all.map((e, i) => ({ e, i })).sort((a, b) => (rank.get(a.e.key) ?? 1e6 + a.i) - (rank.get(b.e.key) ?? 1e6 + b.i)).map((x) => x.e);
+  order = list.map((e) => e.key);
+  const lh = el('div', 'lh'), rows = el('div', 'rows');
+  lh.append(el('h3', null, 'CATALOGS'), el('span', null, 'Home · Discover'));
+  const firstOf = new Set();
+  for (const e of list) { rows.append(row(e, !firstOf.has(e.s.key))); firstOf.add(e.s.key); }
+  box.append(lh, rows);
+  arrows();
+}
+function arrows() {
+  const rs = [...document.querySelectorAll('#groups .row')];
+  rs.forEach((r, i) => { const [up, dn] = r.querySelectorAll('.mv button'); up.disabled = i === 0; dn.disabled = i === rs.length - 1; });
+}
+function saveOrder() { order = [...document.querySelectorAll('#groups .row')].map((x) => x.dataset.key); arrows(); refreshLink(); }
+function row(e, first) {
+  const s = e.s, p = picks[e.key], r = el('div', `row${p.on ? '' : ' off'}`); r.dataset.key = e.key;
+  const grip = el('button', 'grip'); grip.type = 'button'; grip.setAttribute('aria-label', 'Drag to reorder'); grip.append(icon(ICON.grip, 3));
+  const mv = el('div', 'mv'), up = el('button'), dn = el('button');
+  up.type = dn.type = 'button'; up.setAttribute('aria-label', `Move ${s.name} up`); dn.setAttribute('aria-label', `Move ${s.name} down`);
+  up.append(icon('M6 15l6-6 6 6')); dn.append(icon('M6 9l6 6 6-6'));
+  up.onclick = () => { if (r.previousElementSibling) { r.previousElementSibling.before(r); saveOrder(); up.focus(); } };
+  dn.onclick = () => { if (r.nextElementSibling) { r.nextElementSibling.after(r); saveOrder(); dn.focus(); } };
+  mv.append(up, dn);
+  const sw = el('button', 'sw'); sw.type = 'button'; sw.setAttribute('role', 'switch'); sw.setAttribute('aria-checked', String(p.on)); sw.setAttribute('aria-label', `Show ${s.name}`);
+  sw.onclick = () => { p.on = !p.on; sw.setAttribute('aria-checked', String(p.on)); r.classList.toggle('off', !p.on); refreshLink(); };
+  const nw = el('div', 'nmw'), nm = el('input', 'nm'); nm.value = p.name; nm.setAttribute('aria-label', 'Name'); nm.maxLength = 40;
+  nm.oninput = () => { p.name = nm.value; refreshLink(); };
+  nw.append(nm);
+  // variants after the first are Discover only
+  const sub = e.vr.v !== s.variants[0].v;
+  if (sub) p.home = false;
+  const pk = el('div', 'pick'), home = el('button', `c${p.home ? ' on' : ''}`), disc = el('button', `c${p.home ? '' : ' on'}`);
+  let chips = null;
+  if (s.variants.length > 1 && !sub) {
+    const open = openSrc === s.key && first;
+    const fb = el('button', `c${open ? ' on' : ''}`); fb.type = 'button'; fb.title = 'Filters'; fb.setAttribute('aria-label', `Filters of ${s.name}`); fb.setAttribute('aria-expanded', String(open));
+    fb.append(icon(ICON.filter)); fb.onclick = () => { openSrc = openSrc === s.key ? null : s.key; render(); };
+    pk.append(fb);
+    if (open) {
+      chips = el('div', 'chips');
+      for (const vr of s.variants) {
+        if (vr.v === 'none') continue;   // a row's plain list is always there; its chips add copies
+        const on = chosen[s.key].includes(vr.v), ch = el('button', `chip${on ? ' on' : ''}`, vr.label); ch.type = 'button';
+        ch.setAttribute('aria-pressed', String(on)); ch.onclick = () => toggleVariant(s, vr.v); chips.append(ch);
+      }
+    }
+  }
+  home.type = disc.type = 'button'; home.title = 'Home'; disc.title = 'Discover';
+  home.setAttribute('aria-label', `${p.name}: Home`); disc.setAttribute('aria-label', `${p.name}: Discover`);
+  home.setAttribute('aria-pressed', String(p.home)); disc.setAttribute('aria-pressed', String(!p.home));
+  home.append(icon(ICON.home)); disc.append(icon(ICON.disc));
+  const set = (v) => { p.home = v; home.classList.toggle('on', v); disc.classList.toggle('on', !v); home.setAttribute('aria-pressed', String(v)); disc.setAttribute('aria-pressed', String(!v)); refreshLink(); };
+  home.onclick = () => set(true); disc.onclick = () => set(false);
+  if (sub) { home.disabled = true; home.classList.add('gone'); disc.disabled = true; }
+  pk.append(home, disc);
+  r.append(grip, mv, sw, nw, pk);
+  if (chips) r.append(chips);
+  drag(grip, r);
+  return r;
+}
+function drag(grip, r) {
+  grip.addEventListener('pointerdown', (e) => {
+    // listen on window: moving the row in the DOM drops pointer capture on its grip
+    e.preventDefault();
+    r.classList.add('drag'); document.body.classList.add('dragging'); r.style.transition = 'none';
+    let y = e.clientY, y0 = e.clientY + window.scrollY, raf = 0;
+    const slide = (row, from) => {
+      const d = from - row.getBoundingClientRect().top;
+      if (!d) return;
+      row.style.transition = 'none'; row.style.transform = `translateY(${d}px)`;
+      requestAnimationFrame(() => { row.style.transition = 'transform 0.16s ease'; row.style.transform = ''; });
+    };
+    // a fast move can cross several rows
+    const update = () => {
+      const py = y + window.scrollY;
+      let sib;
+      while ((sib = py > y0 ? r.nextElementSibling : r.previousElementSibling)?.classList.contains('row') && Math.abs(py - y0) > sib.offsetHeight / 2) {
+        const from = sib.getBoundingClientRect().top, down = py > y0;
+        if (down) sib.after(r); else sib.before(r);
+        y0 += down ? sib.offsetHeight : -sib.offsetHeight;
+        slide(sib, from);
+      }
+      r.style.transform = `translateY(${py - y0}px)`;
+    };
+    const EDGE = 70;
+    const tick = () => {
+      const v = y < EDGE ? -(EDGE - y) / 3 : y > window.innerHeight - EDGE ? (y - window.innerHeight + EDGE) / 3 : 0;
+      if (v) { window.scrollBy(0, v); update(); }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    const move = (ev) => { if (ev.pointerId === e.pointerId) { y = ev.clientY; update(); } };
+    const up = (ev) => {
+      if (ev.pointerId !== e.pointerId) return;
+      cancelAnimationFrame(raf);
+      window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up);
+      r.classList.remove('drag'); document.body.classList.remove('dragging'); r.style.transform = ''; r.style.transition = '';
+      saveOrder();
+    };
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up);
+  });
+}
+function renderDays() {
+  $('days').replaceChildren(...DAYS.map((d) => { const b = el('button', d === days ? 'on' : null, `${d} days`); b.type = 'button'; b.onclick = () => { days = d; renderDays(); refreshLink(); }; return b; }));
+}
+
+async function connect(saved) {
+  const key = $('key').value.trim();
+  if (!key) return;
+  const km = document.body.classList.contains('start') ? 'k0-msg' : 'k-msg';
+  $(km).className = 'msg'; $(km).textContent = 'Checking…';
+  const r = await fetch('/check', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ key }) }).catch(() => null);
+  const j = await r?.json().catch(() => ({})) || {};
+  if (!r?.ok) { $(km).className = 'msg bad'; $(km).textContent = j.error || 'Can\'t check the key right now.'; return; }
+  src = j.sources; DAYS = j.days || DAYS;
+  picks = {}; chosen = {}; openSrc = null;
+  for (const s of src) {
+    const have = s.variants.map((x) => x.v), want = (saved?.v?.[s.key] || []).filter((x) => have.includes(x));
+    chosen[s.key] = want.length ? want : [...s.defaults];
+    for (const vr of s.variants) for (const pt of vr.parts) {
+      const w = saved?.lists?.[pt.key] || {};
+      picks[pt.key] = { on: w.on ?? s.on, name: w.name || pt.name, home: w.home ?? vr.home };
+    }
+  }
+  order = (saved?.order || []).filter((k) => picks[k]); days = DAYS.includes(saved?.days) ? saved.days : j.defaultDays || 60;
+  $('k-msg').className = 'msg ok'; $('k-msg').textContent = `✓ ${j.name || 'Connected'}`;
+  $('daysw').hidden = false; $('savebox').hidden = false; $('installbox').hidden = false; $('finish').hidden = false; document.body.classList.remove('start');
+  renderDays(); render(); refreshLink();
+}
+$('key').addEventListener('change', () => connect());
+
+
+let pass = '';
+const doSave = async (pw) => {
+  const cfg = config();
+  const r = await fetch('/save', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ config: cfg, password: pw, uuid }) }).catch(() => null);
+  const j = await r?.json().catch(() => ({})) || {};
+  if (!r?.ok) return j.error || 'Can\'t save right now.';
+  uuid = j.uuid; pass = pw; savedSig = JSON.stringify(cfg); showSaved(); refreshLink();
+  return null;
+};
+$('s-go').onclick = async () => {
+  if (!uuid) { document.body.classList.add('pw'); $('pw-form').hidden = false; $('pw-done').hidden = true; window.scrollTo(0, 0); $('s-pass').focus(); return; }
+  const err = await doSave(pass);
+  note('s-msg', err ? 'bad' : 'ok', err || 'Saved');
+};
+$('pw-form').onsubmit = async (e) => {
+  e.preventDefault();
+  const pw = $('s-pass').value;
+  if (pw.length < 8) return note('pw-msg', 'bad', 'At least 8 characters.');
+  if (pw !== $('s-again').value) return note('pw-msg', 'bad', 'The passwords differ.');
+  const err = await doSave(pw);
+  if (err) return note('pw-msg', 'bad', err);
+  $('pw-uuid').value = uuid; $('pw-form').hidden = true; $('pw-done').hidden = false;
+  $('pw-ok').disabled = true; $('pw-copy').textContent = 'Copy'; $('pw-dl').textContent = 'Download';
+};
+const kept = () => { $('pw-ok').disabled = false; };
+$('pw-copy').onclick = async () => {
+  try { await navigator.clipboard.writeText(uuid); $('pw-copy').textContent = 'Copied'; } catch { $('pw-uuid').select(); document.execCommand('copy'); $('pw-copy').textContent = 'Copied'; }
+  kept();
+};
+$('pw-dl').onclick = () => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([`Catalogs\nUUID: ${uuid}\nSign in at: ${location.origin}\n`], { type: 'text/plain' }));
+  a.download = 'catalogs-uuid.txt'; a.click(); URL.revokeObjectURL(a.href);
+  $('pw-dl').textContent = 'Downloaded'; kept();
+};
+const leavePw = () => { document.body.classList.remove('pw'); $('s-pass').value = $('s-again').value = ''; $('pw-msg').textContent = ''; };
+$('pw-back').onclick = leavePw;
+$('pw-ok').onclick = () => { leavePw(); note('s-msg', 'ok', 'Saved'); };
+function showSaved() { $('s-uuid').value = uuid; $('s-uuid-row').hidden = false; $('acct').hidden = false; }
+document.querySelectorAll('#tabs button').forEach((b) => b.addEventListener('click', () => {
+  document.querySelectorAll('#tabs button').forEach((x) => x.classList.toggle('on', x === b));
+  $('t-new').hidden = b.dataset.tab !== 'new'; $('load').hidden = b.dataset.tab !== 'back';
+  ($('load').hidden ? $('key0') : $('l-uuid').value ? $('l-pass') : $('l-uuid')).focus();
+}));
+$('t-new').onsubmit = (e) => { e.preventDefault(); $('key').value = $('key0').value.trim(); connect(); };
+const menu = (open) => { $('menu').hidden = !open; $('login').setAttribute('aria-expanded', String(open)); if (!open) disarm(); };
+$('login').onclick = (e) => { e.stopPropagation(); menu($('menu').hidden); };
+document.addEventListener('click', (e) => { if (!$('acct').contains(e.target)) menu(false); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') menu(false); });
+let armed = null;
+const disarm = () => { if (!armed) return; clearTimeout(armed.t); armed.b.textContent = armed.text; armed.b.classList.remove('armed'); armed = null; };
+const twice = (b, fn) => b.addEventListener('click', () => {
+  if (armed?.b === b) { disarm(); menu(false); return fn(); }
+  disarm(); armed = { b, text: b.textContent, t: setTimeout(disarm, 3000) }; b.textContent = 'Tap again to confirm'; b.classList.add('armed');
+});
+$('m-out').onclick = () => location.assign('/');
+twice($('m-reset'), async () => {
+  for (const s of src) {
+    chosen[s.key] = [...s.defaults];
+    for (const vr of s.variants) for (const pt of vr.parts) picks[pt.key] = { on: s.on, name: pt.name, home: vr.home };
+  }
+  order = []; days = 60; openSrc = null; renderDays(); render();
+  const err = await doSave(pass);
+  note('s-msg', err ? 'bad' : 'ok', err || 'Reset and saved');
+});
+twice($('m-del'), async () => {
+  const r = await fetch('/delete', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ uuid, password: pass }) }).catch(() => null);
+  if (!r?.ok) return note('s-msg', 'bad', 'Can\'t delete right now.');
+  location.assign('/');
+});
+$('load').onsubmit = async (e) => {
+  e.preventDefault();
+  const r = await fetch('/load', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ uuid: $('l-uuid').value.trim(), password: $('l-pass').value }) }).catch(() => null);
+  const j = await r?.json().catch(() => ({})) || {};
+  if (!r?.ok) return note('l-msg', 'bad', j.error || 'Can\'t sign in right now.');
+  uuid = $('l-uuid').value.trim(); pass = $('l-pass').value;
+  $('key').value = j.config.k || '';
+  await connect(j.config);
+  savedSig = JSON.stringify(config()); showSaved(); refreshLink();
+};
+const note = (id, cls, t) => { $(id).className = `msg ${cls}`; $(id).textContent = t; };
+document.querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText($(b.dataset.copy).value); b.textContent = 'Copied'; setTimeout(() => { b.textContent = 'Copy'; }, 1500); } catch { $(b.dataset.copy).select(); }
+}));
+// Stremio's Configure: a UUID in the path asks for its password; settings in the path open as they are
+const seg = location.pathname.split('/')[1] || '';
+if (/^[0-9a-f]{8}-[0-9a-f]{4}-/.test(seg)) { $('l-uuid').value = seg; document.querySelector('#tabs [data-tab="back"]').click(); }
+else if (seg && seg !== 'configure') {
+  try {
+    const cfg = JSON.parse(decodeURIComponent(escape(atob(seg.replace(/-/g, '+').replace(/_/g, '/')))));
+    if (typeof cfg.k === 'string') { $('key').value = cfg.k; connect(cfg); }
+  } catch { /* not settings */ }
+}
+</script>
+</body>
+</html>

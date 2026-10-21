@@ -1,0 +1,16 @@
+# listick-stremio: put this file and .env.example in a folder, cp .env.example .env (your Listick's address in it), then
+#   docker compose up -d
+services:
+  listick-stremio:
+    image: ghcr.io/listicktv/listick-stremio:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      LISTICK_URL: ${LISTICK_URL:?set LISTICK_URL in .env}
+    ports:
+      - "8080:8080"
+    volumes:
+      - data:/data
+
+volumes:
+  data:
