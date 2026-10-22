@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/listicktv/listick-stremio/compare/v0.1.0...v0.2.0) (2026-10-22)
+
+
+### Features
+
+* anime seasons as TheTVDB and Cinemeta split them ([f515ca1](https://github.com/listicktv/listick-stremio/commit/f515ca1cc09e356fa5f572b1f53e27a1959e75e8))
+
 ## 0.1.0 (2026-10-21)
 
 
