@@ -111,6 +111,25 @@ export function animeVideoId(entries, season, ep, abs, base) {
   const whole = entries.find((x) => x.season == null);
   return whole && season > 0 ? `kitsu:${whole.kitsu}:${abs}` : `${base}:${season}:${ep}`;
 }
+// an anime's episodes (TMDB's: { season, episode, air }) in TheTVDB's order, matched by air date (a day either way for time
+// zones); a season > 0 episode with no air date follows the one before it. null unless all are placed and the order differs
+export function tvdbOrder(tmdbEps, tvdbEps) {
+  const day = (s, d) => new Date(Date.parse(`${s}T12:00:00Z`) + d * 86400000).toISOString().slice(0, 10);
+  const byDay = new Map();
+  for (const e of tvdbEps) if (e.seasonNumber > 0 && e.aired) (byDay.get(e.aired) || byDay.set(e.aired, []).get(e.aired)).push(e);
+  const out = new Map();
+  let last = null, moved = false;
+  for (const e of tmdbEps) {
+    if (e.season === 0) continue;
+    const t = e.air ? [0, -1, 1].map((d) => byDay.get(day(e.air, d))).find((q) => q?.length)?.shift() : null;
+    const p = t ? { season: t.seasonNumber, episode: t.number } : !e.air && last ? { season: last.season, episode: last.episode + 1 } : null;
+    if (!p) return null;
+    if (p.season !== e.season || p.episode !== e.episode) moved = true;
+    out.set(`${e.season}:${e.episode}`, p);
+    last = p;
+  }
+  return moved ? out : null;
+}
 export function releaseInfo(movie, d) {
   const year = (movie ? d.release_date : d.first_air_date)?.slice(0, 4);
   if (!year || movie) return year || undefined;

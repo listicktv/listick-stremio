@@ -1,6 +1,6 @@
 // Title details and search from TMDB, TheTVDB and Kitsu, with the ids stream addons look up: <IMDb id>:<season>:<episode>,
 // and kitsu:<id>:<episode> for anime where Fribb maps a Kitsu entry.
-import { animeVideoId, releaseInfo } from './lib.mjs';
+import { animeVideoId, releaseInfo, tvdbOrder } from './lib.mjs';
 
 const env = (k) => (process.env[k] || '').trim();
 export const metaOn = () => !!env('TMDB_ACCESS_TOKEN');
@@ -139,11 +139,18 @@ async function episodes(d, imdb) {
   const video = (se, ep, x) => ({ id: `${base}:${se}:${ep}`, season: se, episode: ep, ...x });
   if (isAnime(d)) {
     const entries = await Promise.all(((await loadFribb()).byTmdb.get(d.id) || []).map(async (e) => ({ ...e, count: await kitsuCount(e.kitsu) })));
+    const all = [];
+    for (const [sn, eps] of await seasonsOf(d.id, (d.seasons || []).map((s) => s.season_number))) for (const e of eps) all.push({ season: sn, episode: e.episode_number, air: e.air_date, e });
+    // seasons as TheTVDB (and Cinemeta) split them, where every episode can be placed
+    const order = tvdbId && env('TVDB_API_KEY') ? tvdbOrder(all, await tvdbEpisodes(tvdbId).catch(() => [])) : null;
     const out = [];
     let abs = 0;
-    for (const [sn, eps] of await seasonsOf(d.id, (d.seasons || []).map((s) => s.season_number))) for (const e of eps) {
+    for (const { season: sn, episode: ep, e } of all) {
       if (sn > 0) abs++;
-      out.push({ id: animeVideoId(entries, sn, e.episode_number, abs, base), title: e.name || `Episode ${e.episode_number}`, season: sn, episode: e.episode_number,
+      const p = order?.get(`${sn}:${ep}`), se = p?.season ?? sn, en = p?.episode ?? ep;
+      let id = animeVideoId(entries, sn, ep, abs, base);
+      if (p && id.startsWith(`${base}:`)) id = `${base}:${se}:${en}`;
+      out.push({ id, title: e.name || `Episode ${ep}`, season: se, episode: en,
         released: iso(e.air_date), overview: e.overview || undefined, thumbnail: e.still_path ? `${IMG}w500${e.still_path}` : bg(d) });
     }
     return out;

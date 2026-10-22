@@ -1,7 +1,7 @@
 // What the addon makes of Listick's lists: catalogs, settings, the manifest and what a catalog asks Listick for.
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { animeVideoId, clientIp, extraOf, listQuery, manifest, meta, readConfig, releaseInfo, variantsOf } from '../lib.mjs';
+import { animeVideoId, clientIp, extraOf, listQuery, manifest, meta, readConfig, releaseInfo, tvdbOrder, variantsOf } from '../lib.mjs';
 
 const KINDS = { name: 'Type', options: ['Movies', 'Series', 'Anime'] };
 // a Listick account's lists as /api/v1/lists gives them (a smart list is one of the owner's own lists)
@@ -88,4 +88,17 @@ test('release years: a film\'s year; a show\'s range once it ended, open while i
   assert.equal(releaseInfo(false, { first_air_date: '2008-01-20', last_air_date: '2013-09-29', status: 'Ended' }), '2008–2013');
   assert.equal(releaseInfo(false, { first_air_date: '2016-07-15', last_air_date: '2025-11-26', status: 'Returning Series' }), '2016–');
   assert.equal(releaseInfo(false, { first_air_date: '2024-01-01', last_air_date: '2024-03-01', status: 'Ended' }), '2024');
+});
+test('an anime in TheTVDB\'s seasons, matched by air date', () => {
+  // TMDB: one season of 4; TheTVDB: two seasons of 2, the second part's first episode a day later there (time zones)
+  const tmdb = [{ season: 1, episode: 1, air: '2023-09-29' }, { season: 1, episode: 2, air: '2023-10-06' }, { season: 1, episode: 3, air: '2024-01-05' },
+    { season: 1, episode: 4, air: null }, { season: 0, episode: 1, air: '2023-12-01' }];
+  const tvdb = [{ seasonNumber: 1, number: 1, aired: '2023-09-29' }, { seasonNumber: 1, number: 2, aired: '2023-10-06' }, { seasonNumber: 2, number: 1, aired: '2024-01-06' },
+    { seasonNumber: 2, number: 2, aired: null }];
+  const o = tvdbOrder(tmdb, tvdb);
+  assert.deepEqual(o.get('1:3'), { season: 2, episode: 1 });
+  assert.deepEqual(o.get('1:4'), { season: 2, episode: 2 }, 'no air date: after the one before');
+  assert.equal(o.has('0:1'), false, 'specials keep TMDB\'s');
+  assert.equal(tvdbOrder(tmdb.slice(0, 2), tvdb), null, 'the same order: nothing to change');
+  assert.equal(tvdbOrder([{ season: 1, episode: 1, air: '2020-01-01' }], tvdb), null, 'an episode it can\'t place');
 });
