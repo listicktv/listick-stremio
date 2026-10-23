@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/listicktv/listick-stremio/compare/v0.2.0...v0.2.1) (2026-10-23)
+
+
+### Bug Fixes
+
+* search gives IMDb ids where TMDB has one ([a741074](https://github.com/listicktv/listick-stremio/commit/a741074a4e53f7be1d4efb84686802e980e079d1))
+
 ## [0.2.0](https://github.com/listicktv/listick-stremio/compare/v0.1.0...v0.2.0) (2026-10-22)
 
 
