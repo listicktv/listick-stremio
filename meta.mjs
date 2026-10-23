@@ -245,6 +245,8 @@ export async function stremioSearch(type, text) {
   }
   const kind = type === 'movie' ? 'movie' : 'tv';
   const d = await tmdb(`/search/${kind}?query=${encodeURIComponent(text)}&include_adult=false`);
-  return (d.results || []).filter((r) => r.poster_path).slice(0, 30).map((r) => ({ id: `tmdb:${r.id}`, type, name: r.title || r.name,
+  const rs = (d.results || []).filter((r) => r.poster_path).slice(0, 30);
+  const ids = await Promise.all(rs.map((r) => tmdb(`/${kind}/${r.id}/external_ids`).then((x) => (/^tt\d+$/.test(x?.imdb_id || '') ? x.imdb_id : null)).catch(() => null)));
+  return rs.map((r, i) => ({ id: ids[i] || `tmdb:${r.id}`, type, name: r.title || r.name,
     poster: `${IMG}w342${r.poster_path}`, releaseInfo: (r.release_date || r.first_air_date || '').slice(0, 4) || undefined, description: r.overview || undefined }));
 }
