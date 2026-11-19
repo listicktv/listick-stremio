@@ -60,6 +60,7 @@ test('a list item keeps the id Listick gives it, so Cinemeta, the Kitsu addon an
   assert.deepEqual(meta({ id: 'tt0133093', type: 'movie', title: 'The Matrix', year: 1999, poster: 'p' }),
     { id: 'tt0133093', type: 'movie', name: 'The Matrix', poster: 'p', releaseInfo: '1999', description: undefined });
   assert.equal(meta({ id: 'kitsu:46474', type: 'series', title: 'Frieren', next: 'E9' }).description, 'Next: E9');
+  assert.equal(meta({ id: 'tt1', type: 'movie', title: 'X', poster: 'https://image.tmdb.org/t/p/w342/a.jpg' }).poster, 'https://image.tmdb.org/t/p/w500/a.jpg');
 });
 test('the client address counts proxies from the right, so entries a client writes itself are ignored', () => {
   assert.equal(clientIp('6.6.6.6, 203.0.113.9', '10.0.0.1', 1), '203.0.113.9');

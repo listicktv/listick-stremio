@@ -85,7 +85,9 @@ export const manifest = (cfg, all, version, details = false) => ({
   }), ...(details ? SEARCH : [])],
   behaviorHints: { configurable: true },
 });
-export const meta = (x) => ({ id: x.id, type: x.type, name: x.title, poster: x.poster || undefined,
+// posters at w500
+const big = (u) => u?.replace('/t/p/w342/', '/t/p/w500/');
+export const meta = (x) => ({ id: x.id, type: x.type, name: x.title, poster: big(x.poster) || undefined,
   releaseInfo: x.year ? String(x.year) : undefined, description: x.next ? `Next: ${x.next}` : undefined });
 // split by hand: URLSearchParams would turn the + in "8+" into a space
 export const extraOf = (extra) => new Map(String(extra || '').split('&').filter(Boolean).map((kv) => { const i = kv.indexOf('='); return i < 0 ? [kv, ''] : [kv.slice(0, i), kv.slice(i + 1)]; }));

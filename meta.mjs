@@ -173,7 +173,8 @@ async function episodes(d, imdb) {
       thumbnail: e.still_path ? `${IMG}w500${e.still_path}` : bg(d) }));
   return out;
 }
-const bg = (d) => (d.backdrop_path ? `${IMG}w780${d.backdrop_path}` : undefined);
+// background: TMDB's original
+const bg = (d) => (d.backdrop_path ? `${IMG}original${d.backdrop_path}` : undefined);
 
 async function kitsuMeta(type, id, kid) {
   const a = (await kitsu(`/anime/${kid}`))?.data?.attributes;
@@ -248,5 +249,5 @@ export async function stremioSearch(type, text) {
   const rs = (d.results || []).filter((r) => r.poster_path).slice(0, 30);
   const ids = await Promise.all(rs.map((r) => tmdb(`/${kind}/${r.id}/external_ids`).then((x) => (/^tt\d+$/.test(x?.imdb_id || '') ? x.imdb_id : null)).catch(() => null)));
   return rs.map((r, i) => ({ id: ids[i] || `tmdb:${r.id}`, type, name: r.title || r.name,
-    poster: `${IMG}w342${r.poster_path}`, releaseInfo: (r.release_date || r.first_air_date || '').slice(0, 4) || undefined, description: r.overview || undefined }));
+    poster: `${IMG}w500${r.poster_path}`, releaseInfo: (r.release_date || r.first_air_date || '').slice(0, 4) || undefined, description: r.overview || undefined }));
 }
