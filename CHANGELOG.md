@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/listicktv/listick-stremio/compare/v0.2.1...v0.3.0) (2026-11-19)
+
+
+### Features
+
+* sharper backgrounds and posters ([516d007](https://github.com/listicktv/listick-stremio/commit/516d007b17531be98422c9559db824343e4ce4e0))
+
 ## [0.2.1](https://github.com/listicktv/listick-stremio/compare/v0.2.0...v0.2.1) (2026-10-23)
 
 
